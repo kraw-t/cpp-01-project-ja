@@ -82,7 +82,7 @@ int main() {
           return 1;
         }
       } else {
-        // 左折できない位置ならコマンド入力からやり直し
+        // 右折できない位置ならコマンド入力からやり直し
         std::cout << "Can't turn right here." << std::endl;
       }
     } else if (user_command == Command::ContinueStraight) {
@@ -97,18 +97,48 @@ int main() {
           return 1;
         }
       } else {
-        // 左折できない位置ならコマンド入力からやり直し
+        // 直進できない位置ならコマンド入力からやり直し
         std::cout << "Can't continue straight here." << std::endl;
       }
     } else if (user_command == Command::Accelerate) {
-      // スピード設定値アップ（位置は変えず、次の行動に反映される
-      if (speed < max_speed) {
-        speed++;
+      if (is_continue_straight_enable(pos)) {
+        // 先にスピード設定値アップ
+        if (speed < max_speed) {
+          speed++;
+        }
+        // 直進
+        try {
+          pos = calcNextPositon(pos, Command::ContinueStraight, speed);
+        } catch (const std::runtime_error& e) {
+          std::cerr << "Game Over: " << e.what() << std::endl;
+          break;
+        } catch (const std::logic_error& e) {
+          std::cerr << "Error: " << e.what() << std::endl;
+          return 1;
+        }
+      } else {
+        // 直進できない位置なら加速も不可、コマンド入力からやり直し
+        std::cout << "Can't accelerate here." << std::endl;
       }
     } else if (user_command == Command::Decelerate) {
-      // スピード設定値ダウン（位置は変えず、次の行動に反映される
-      if (speed > min_speed) {
-        speed--;
+      if (is_continue_straight_enable(pos)) {
+        // 先にスピード設定値ダウン
+        if (speed > min_speed) {
+          speed--;
+        }
+        // 直進
+        try {
+          pos = calcNextPositon(pos, Command::ContinueStraight, speed);
+        } catch (const std::runtime_error& e) {
+          std::cerr << "Game Over: " << e.what() << std::endl;
+          break;
+        } catch (const std::logic_error& e) {
+          std::cerr << "Error: " << e.what() << std::endl;
+          return 1;
+        }
+      } else {
+        // 直進できない位置なら減速も不可、コマンド入力からやり直し
+        std::cout << "Can't decelerate here." << std::endl;
       }
     } else if (user_command == Command::Stop) {
       speed = 0;
