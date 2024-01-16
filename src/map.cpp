@@ -67,12 +67,23 @@ void validateInitialPosition(void) {
   }
 }
 
-// マップを表示する関数
+// マップと自己位置を表示する関数
 // 通れる場所を*、通れない場所を空白で表現する
-void displayMap(const std::vector<LandMark>& landmarks) {
+// 自己位置は向きに応じて記号を変えて表示
+void displayMap(const std::vector<LandMark>& landmarks, const Position& pos) {
   for (int i = 0; i < map_size_y; i++) {
     for (int j = 0; j < map_size_x; j++) {
-      if (map[i][j] == 0) {
+      if ((pos.x == j) && (pos.y == i)) {
+        if (pos.direction == Direction::North) {
+          std::cout << "^";
+        } else if (pos.direction == Direction::South) {
+          std::cout << "v";
+        } else if (pos.direction == Direction::East) {
+          std::cout << ">";
+        } else {  // (direction == Direction::West)
+          std::cout << "<";
+        }
+      } else if (map[i][j] == 0) {
         std::cout << " ";
       } else {
         // validateMapで0,1以外含まれないことを確認済みなので、ここに来るのは1のときのみ

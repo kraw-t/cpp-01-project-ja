@@ -44,7 +44,7 @@ void validateLandmarks(const std::vector<LandMark>& landmarks);
 void validateInitialPosition(void);
 
 // マップを表示する関数
-void displayMap(const std::vector<LandMark>& landmarks);
+void displayMap(const std::vector<LandMark>& landmarks, const Position& pos);
 
 // 位置に応じた行動可否を判断する関数
 bool is_turn_left_enable(const Position& pos);

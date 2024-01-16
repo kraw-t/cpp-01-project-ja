@@ -43,15 +43,13 @@ int main() {
     return 1;
   }   
 
-  // マップを表示
-  displayMap(landmarks);
-
   // コマンド受付→行動のルーチン開始
   Position pos {initial_x, initial_y, initial_direction};
   unsigned int speed {min_speed};
   while (true) {
     // 情報提示
     std::cout << "[info] Position: (" << pos.x << ", " << pos.y << "), Direction: " << direction2str(pos.direction) << ", Speed: " << speed << std::endl;
+    displayMap(landmarks, pos);
 
     // ユーザのコマンドを受け付け
     Command user_command = input_user_command();
@@ -167,7 +165,7 @@ Command input_user_command(void) {
 
 // コマンドに応じて次の自己位置を計算する関数
 Position calcNextPositon(Position pos, Command user_command, unsigned int speed) {
-  Position next_pos;
+  Position next_pos {pos};
 
   for (int i = 0; i < speed; i++) {
     if (user_command == Command::TurnLeft) {
