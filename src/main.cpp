@@ -4,6 +4,8 @@
 #include "map.hpp"
 
 // 設定値定義
+constexpr unsigned int max_speed = 3;
+constexpr unsigned int min_speed = 1;
 
 // コマンドのEnum定義
 typedef enum {
@@ -18,7 +20,7 @@ typedef enum {
 
 // プロトタイプ宣言
 Command input_user_command(void);
-Position calcNextPositon(const Position& pos, Command user_command);
+Position calcNextPositon(Position pos, Command user_command, unsigned int speed);
 
 int main() {
   // memo : map_size_y == map.size(), map_size_x == map.at(0).size()
@@ -46,9 +48,10 @@ int main() {
 
   // コマンド受付→行動のルーチン開始
   Position pos {initial_x, initial_y, initial_direction};
+  unsigned int speed {min_speed};
   while (true) {
     // 情報提示
-    std::cout << "[info] Position: (" << pos.x << ", " << pos.y << "), Direction: " << direction2str(pos.direction) << std::endl;
+    std::cout << "[info] Position: (" << pos.x << ", " << pos.y << "), Direction: " << direction2str(pos.direction) << ", Speed: " << speed << std::endl;
 
     // ユーザのコマンドを受け付け
     Command user_command = input_user_command();
@@ -56,28 +59,61 @@ int main() {
     // コマンドに応じた処理
     if (user_command == Command::TurnLeft) {
       if (is_turn_left_enable(pos)) {
-        pos = calcNextPositon(pos, user_command);
+        try {
+          pos = calcNextPositon(pos, user_command, speed);
+        } catch (const std::runtime_error& e) {
+          std::cerr << "Game Over: " << e.what() << std::endl;
+          break;
+        } catch (const std::logic_error& e) {
+          std::cerr << "Error: " << e.what() << std::endl;
+          return 1;
+        }
       } else {
         // 左折できない位置ならコマンド入力からやり直し
         std::cout << "Can't turn left here." << std::endl;
       }
     } else if (user_command == Command::TurnRight) {
       if (is_turn_right_enable(pos)) {
-        pos = calcNextPositon(pos, user_command);
+        try {
+          pos = calcNextPositon(pos, user_command, speed);
+        } catch (const std::runtime_error& e) {
+          std::cerr << "Game Over: " << e.what() << std::endl;
+          break;
+        } catch (const std::logic_error& e) {
+          std::cerr << "Error: " << e.what() << std::endl;
+          return 1;
+        }
       } else {
         // 左折できない位置ならコマンド入力からやり直し
         std::cout << "Can't turn right here." << std::endl;
       }
     } else if (user_command == Command::ContinueStraight) {
       if (is_continue_straight_enable(pos)) {
-        pos = calcNextPositon(pos, user_command);
+        try {
+          pos = calcNextPositon(pos, user_command, speed);
+        } catch (const std::runtime_error& e) {
+          std::cerr << "Game Over: " << e.what() << std::endl;
+          break;
+        } catch (const std::logic_error& e) {
+          std::cerr << "Error: " << e.what() << std::endl;
+          return 1;
+        }
       } else {
         // 左折できない位置ならコマンド入力からやり直し
         std::cout << "Can't continue straight here." << std::endl;
       }
     } else if (user_command == Command::Accelerate) {
+      // スピード設定値アップ（位置は変えず、次の行動に反映される
+      if (speed < max_speed) {
+        speed++;
+      }
     } else if (user_command == Command::Decelerate) {
+      // スピード設定値ダウン（位置は変えず、次の行動に反映される
+      if (speed > min_speed) {
+        speed--;
+      }
     } else if (user_command == Command::Stop) {
+      speed = 0;
     } else {
       // ここに来るのは (user_command == Command::GameEnd) の時だけ
       break;
@@ -130,65 +166,76 @@ Command input_user_command(void) {
 }
 
 // コマンドに応じて次の自己位置を計算する関数
-Position calcNextPositon(const Position& pos, Command user_command) {
+Position calcNextPositon(Position pos, Command user_command, unsigned int speed) {
   Position next_pos;
 
-  if (user_command == Command::TurnLeft) {
-    if (pos.direction == Direction::North) {
-      next_pos.direction = Direction::West;
-      next_pos.x = pos.x - 1;
-      next_pos.y = pos.y;
-    } else if (pos.direction == Direction::South) {
-      next_pos.direction = Direction::East;
-      next_pos.x = pos.x + 1;
-      next_pos.y = pos.y;
-    } else if (pos.direction == Direction::East) {
-      next_pos.direction = Direction::North;
-      next_pos.x = pos.x;
-      next_pos.y = pos.y - 1;
-    } else {  //  == Direction::West
-      next_pos.direction = Direction::South;
-      next_pos.x = pos.x;
-      next_pos.y = pos.y + 1;
+  for (int i = 0; i < speed; i++) {
+    if (user_command == Command::TurnLeft) {
+      if (pos.direction == Direction::North) {
+        next_pos.direction = Direction::West;
+        next_pos.x = pos.x - 1;
+        next_pos.y = pos.y;
+      } else if (pos.direction == Direction::South) {
+        next_pos.direction = Direction::East;
+        next_pos.x = pos.x + 1;
+        next_pos.y = pos.y;
+      } else if (pos.direction == Direction::East) {
+        next_pos.direction = Direction::North;
+        next_pos.x = pos.x;
+        next_pos.y = pos.y - 1;
+      } else {  //  == Direction::West
+        next_pos.direction = Direction::South;
+        next_pos.x = pos.x;
+        next_pos.y = pos.y + 1;
+      }
+    } else if (user_command == Command::TurnRight) {
+      if (pos.direction == Direction::North) {
+        next_pos.direction = Direction::East;
+        next_pos.x = pos.x + 1;
+        next_pos.y = pos.y;
+      } else if (pos.direction == Direction::South) {
+        next_pos.direction = Direction::West;
+        next_pos.x = pos.x - 1;
+        next_pos.y = pos.y;
+      } else if (pos.direction == Direction::East) {
+        next_pos.direction = Direction::South;
+        next_pos.x = pos.x;
+        next_pos.y = pos.y + 1;
+      } else {  //  == Direction::West
+        next_pos.direction = Direction::North;
+        next_pos.x = pos.x;
+        next_pos.y = pos.y - 1;
+      }
+    } else if (user_command == Command::ContinueStraight) {
+      if (is_continue_straight_enable(pos)) {
+        next_pos.direction = pos.direction;
+        if (pos.direction == Direction::North) {
+          next_pos.x = pos.x;
+          next_pos.y = pos.y - 1;
+        } else if (pos.direction == Direction::South) {
+          next_pos.x = pos.x;
+          next_pos.y = pos.y + 1;
+        } else if (pos.direction == Direction::East) {
+          next_pos.x = pos.x + 1;
+          next_pos.y = pos.y;
+        } else {  //  == Direction::West
+          next_pos.x = pos.x - 1;
+          next_pos.y = pos.y;
+        }
+      } else {
+        // speedが2以上であることによって、道路外へ出るとここに来る
+        throw std::runtime_error("Over speeding and went off the road.");
+      }
+    } else {
+      // 左折、右折、直進以外でここに来ることは無いので、来た場合はワーニング出す。
+      // 処理を続けられないわけではないので、posをそのまま返す
+      throw std::logic_error("calcNextPositon() was called with unexpected Command.");
     }
-  } else if (user_command == Command::TurnRight) {
-    if (pos.direction == Direction::North) {
-      next_pos.direction = Direction::East;
-      next_pos.x = pos.x + 1;
-      next_pos.y = pos.y;
-    } else if (pos.direction == Direction::South) {
-      next_pos.direction = Direction::West;
-      next_pos.x = pos.x - 1;
-      next_pos.y = pos.y;
-    } else if (pos.direction == Direction::East) {
-      next_pos.direction = Direction::South;
-      next_pos.x = pos.x;
-      next_pos.y = pos.y + 1;
-    } else {  //  == Direction::West
-      next_pos.direction = Direction::North;
-      next_pos.x = pos.x;
-      next_pos.y = pos.y - 1;
-    }
-  } else if (user_command == Command::ContinueStraight) {
-    next_pos.direction = pos.direction;
-    if (pos.direction == Direction::North) {
-      next_pos.x = pos.x;
-      next_pos.y = pos.y - 1;
-    } else if (pos.direction == Direction::South) {
-      next_pos.x = pos.x;
-      next_pos.y = pos.y + 1;
-    } else if (pos.direction == Direction::East) {
-      next_pos.x = pos.x + 1;
-      next_pos.y = pos.y;
-    } else {  //  == Direction::West
-      next_pos.x = pos.x - 1;
-      next_pos.y = pos.y;
-    }
-  } else {
-    // 左折、右折、直進以外でここに来ることは無いので、来た場合はワーニング出す。
-    // 処理を続けられないわけではないので、posをそのまま返す
-    std::cout << "[warning] calcNextPositon() was called with unexpected Command." << std::endl;
-    next_pos = pos;
+
+    // speedが2以上の時は、ContinueStraightの処理を繰り返すことで1マスずつ進める
+    // 1マスずつ進めることで、道路外へ出た場合の検出を容易にする
+    user_command = Command::ContinueStraight;
+    pos = next_pos;
   }
   return next_pos;
 }
