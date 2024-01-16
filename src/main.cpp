@@ -26,12 +26,12 @@ int main() {
   // memo : map_size_y == map.size(), map_size_x == map.at(0).size()
   // ランドマークの設定
   std::vector<LandMark> landmarks;
-  //LandMark lm1 {"tokyo tower", 4, 9, false};
-  //landmarks.push_back(lm1);
-  LandMark lm2 {"tokyo sky tree", 3, 8, false};
+  LandMark lm1 {"tokyo tower", 9, 0, false};
+  landmarks.push_back(lm1);
+  LandMark lm2 {"tokyo sky tree", 3, 4, false};
   landmarks.push_back(lm2);
-  //LandMark lm3 {"GS shiba-koen", 2, 5, true};
-  //landmarks.push_back(lm3);
+  LandMark lm3 {"GS shiba-koen", 7, 8, true};
+  landmarks.push_back(lm3);
 
   // マップ、ランドマーク設定を検証
   try {
@@ -39,7 +39,7 @@ int main() {
     validateLandmarks(landmarks);
     validateInitialPosition();
   } catch (const std::runtime_error& e) {
-    std::cerr << "RuntimeError: " << e.what() << std::endl;
+    std::cerr << "Error: " << e.what() << std::endl;
     return 1;
   }   
 
@@ -48,7 +48,9 @@ int main() {
   unsigned int speed {min_speed};
   while (true) {
     // 情報提示
-    std::cout << "[info] Position: (" << pos.x << ", " << pos.y << "), Direction: " << direction2str(pos.direction) << ", Speed: " << speed << std::endl;
+    std::cout << "[info] Position: (" << pos.x << ", " << pos.y << "),"
+              << "Direction: " << direction2str(pos.direction) << ", Speed: " << speed << ", "
+              << lookforNearLandmark(landmarks, pos) << std::endl;
     displayMap(landmarks, pos);
 
     // ユーザのコマンドを受け付け
@@ -106,7 +108,7 @@ int main() {
         if (speed < max_speed) {
           speed++;
         }
-        // 直進
+        // 直進する
         try {
           pos = calcNextPositon(pos, Command::ContinueStraight, speed);
         } catch (const std::runtime_error& e) {
@@ -126,7 +128,7 @@ int main() {
         if (speed > min_speed) {
           speed--;
         }
-        // 直進
+        // 直進する
         try {
           pos = calcNextPositon(pos, Command::ContinueStraight, speed);
         } catch (const std::runtime_error& e) {

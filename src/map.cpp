@@ -67,31 +67,86 @@ void validateInitialPosition(void) {
   }
 }
 
-// マップと自己位置を表示する関数
-// 通れる場所を*、通れない場所を空白で表現する
+// マップとランドマーク、自己位置を表示する関数
+// 通れる場所を*、通れない場所を空白で表示する
+// ランドマークはOで表示する
 // 自己位置は向きに応じて記号を変えて表示
 void displayMap(const std::vector<LandMark>& landmarks, const Position& pos) {
+  char disp_char {};
   for (int i = 0; i < map_size_y; i++) {
     for (int j = 0; j < map_size_x; j++) {
-      if ((pos.x == j) && (pos.y == i)) {
-        if (pos.direction == Direction::North) {
-          std::cout << "^";
-        } else if (pos.direction == Direction::South) {
-          std::cout << "v";
-        } else if (pos.direction == Direction::East) {
-          std::cout << ">";
-        } else {  // (direction == Direction::West)
-          std::cout << "<";
-        }
-      } else if (map[i][j] == 0) {
-        std::cout << " ";
+      // 表示優先度低：マップ
+      if (map[i][j] == 0) {
+        disp_char = ' ';
       } else {
         // validateMapで0,1以外含まれないことを確認済みなので、ここに来るのは1のときのみ
-        std::cout << "*";
+        disp_char = '*';
       }
+
+      // 表示優先度中：ランドマーク
+      for (LandMark lm : landmarks) {
+        if ((lm.x == j) && (lm.y == i)) {
+          disp_char = 'O';
+          break;
+        }
+      }
+
+      // 表示優先度高：自己位置
+      if ((pos.x == j) && (pos.y == i)) {
+        if (pos.direction == Direction::North) {
+          disp_char = '^';
+        } else if (pos.direction == Direction::South) {
+          disp_char = 'v';
+        } else if (pos.direction == Direction::East) {
+          disp_char = '>';
+        } else {  // (direction == Direction::West)
+          disp_char = '<';
+        }
+      }
+      std::cout << disp_char;
     }
     std::cout << std::endl;
   }
+}
+
+// 進行方向所定マス(look_ahead_blocks)以内にランドマークがある場合は情報を返す関数
+std::string lookforNearLandmark(const std::vector<LandMark>& landmarks, const Position& pos) {
+  std::string str {"Near landmark: None"};
+
+  // 近くの検索：表示優先度低
+  for (LandMark lm : landmarks) {
+    for (int i = 1; i <= look_ahead_blocks; i++) {
+      if (pos.direction == Direction::North) {
+        if (((pos.y - i) >= 0) && (lm.x == pos.x) && (lm.y == (pos.y - i))) {
+          str = "Near landmark: \"" + lm.name + "\"";
+          break;
+        }
+      } else if (pos.direction == Direction::South) {
+        if (((pos.y + i) < map_size_y) && (lm.x == pos.x) && (lm.y == (pos.y + i))) {
+          str = "Near landmark: \"" + lm.name + "\"";
+          break;
+        }
+      } else if (pos.direction == Direction::East) {
+        if (((pos.x + i) < map_size_x) && (lm.x == (pos.x + i)) && (lm.y == pos.y)) {
+          str = "Near landmark: \"" + lm.name + "\"";
+          break;
+        }
+      } else {  // == Direction::West
+        if (((pos.x - i) >= 0) && (lm.x == (pos.x - i)) && (lm.y == pos.y)) {
+          str = "Near landmark: \"" + lm.name + "\"";
+          break;
+        }
+      }
+    }
+  }
+
+  // その場所の検索：表示優先度高
+  for (LandMark lm : landmarks) {
+    if ((lm.x == pos.x) && (lm.y == pos.y)) {
+      str = "Arrive at \"" + lm.name + "\"";
+    }
+  }
+  return str;
 }
 
 bool is_turn_left_enable(const Position& pos) {
