@@ -66,6 +66,40 @@ void validateMap(void) {
       if ((map[i][j] != 0) && (map[i][j] != 1)) {
         throw std::runtime_error("Invalid value is included in map X:" + std::to_string(j) + " Y:" + std::to_string(i) + ".");
       }
+
+      // 袋小路が無いかのチェック
+      if (map[i][j] == 1) {
+        // ある道路マスに縦横隣り合う4マス（端の場合2,3マス）の和をとった時、2未満だったら袋小路になっているのでエラーを返す
+        int sum {};
+        if (j == 0) {
+          if (i == 0) {
+            sum = map[i+1][j] + map[i][j+1];
+          } else if (i == (map_size_y - 1)) {
+            sum = map[i-1][j] + map[i][j+1];
+          } else {
+            sum = map[i-1][j] + map[i+1][j] + map[i][j+1];
+          }
+        } else if (j == (map_size_x - 1)) {
+          if (i == 0) {
+            sum = map[i+1][j] + map[i][j-1];
+          } else if (i == (map_size_y - 1)) {
+            sum = map[i-1][j] + map[i][j-1];
+          } else {
+            sum = map[i-1][j] + map[i+1][j] + map[i][j-1];
+          }
+        } else {
+          if (i == 0) {
+            sum = map[i][j-1] + map[i][j+1] + map[i+1][j];
+          } else if (i == (map_size_y - 1)) {
+            sum = map[i][j-1] + map[i][j+1] + map[i-1][j];
+          } else {
+            sum = map[i][j-1] + map[i][j+1] + map[i-1][j] + map[i+1][j];
+          }
+        }
+        if (sum < 2) {
+          throw std::runtime_error("Dead end road included in map X:" + std::to_string(j) + " Y:" + std::to_string(i) + ".");
+        }
+      }
     }
   }
 }
@@ -108,7 +142,7 @@ void validateInitialPosition(void) {
 }
 
 // マップとランドマーク、自己位置を表示する関数
-// 通れる場所を*、通れない場所を空白で表示する
+// 通れる場所を+、通れない場所を空白で表示する
 // ランドマークはOで表示する
 // 自己位置は向きに応じて記号を変えて表示
 void displayMap(const std::vector<LandMark>& landmarks, const Position& pos) {

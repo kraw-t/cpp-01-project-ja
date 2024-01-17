@@ -155,15 +155,15 @@ int main() {
       break;
     }
 
+    // step数をインクリメント
+    steps++;
+
     // ランドマークに到達したかのチェック
     if (judgeArriveLandmarks(landmarks, pos)) {
       std::cout << "All landmerks reached. Congratulations!" << std::endl;
       std::cout << "Your score: " << steps << " steps, " << fuel << " remaining fuel." << std::endl; 
       break;
     }
-
-    // step数をインクリメント
-    steps++;
   }
 
   std::cout << "bye!" << std::endl;
