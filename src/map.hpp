@@ -18,7 +18,7 @@ typedef struct {     // ランドマーク構造体
   std::string name;  // 名称
   unsigned int x;    // X座標
   unsigned int y;    // Y座標
-  bool is_gs;        // ガソリンスタンドか否か
+  bool is_arrived;   // 到達したか否か
 } LandMark;
 
 typedef struct {        // 自己位置構造体
@@ -28,12 +28,12 @@ typedef struct {        // 自己位置構造体
 } Position;
 
 // マップ変数の宣言
-constexpr unsigned int map_size_x = 12;
-constexpr unsigned int map_size_y = 10;
+constexpr unsigned int map_size_x = 100;
+constexpr unsigned int map_size_y = 50;
 extern const std::array<std::array<unsigned int, map_size_x>, map_size_y> map;
 
 // マップ上の初期位置
-constexpr unsigned int initial_x = 1;
+constexpr unsigned int initial_x = 5;
 constexpr unsigned int initial_y = 0;
 constexpr Direction initial_direction = Direction::East;
 
@@ -54,6 +54,9 @@ std::string lookforNearLandmark(const std::vector<LandMark>& landmarks, const Po
 bool is_turn_left_enable(const Position& pos);
 bool is_turn_right_enable(const Position& pos);
 bool is_continue_straight_enable(const Position& pos);
+
+// ランドマーク到達判断と到達状況を更新する関数
+bool judgeArriveLandmarks(std::vector<LandMark>& landmarks, const Position& pos);
 
 // Directionの補助関数
 std::string direction2str(Direction direction);

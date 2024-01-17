@@ -6,6 +6,8 @@
 // 設定値定義
 constexpr unsigned int max_speed = 3;
 constexpr unsigned int min_speed = 1;
+constexpr int fuel_init = 1000;
+std::array<int, (max_speed + 1)> fuel_consumption {1, 1, 3, 9};
 
 // コマンドのEnum定義
 typedef enum {
@@ -20,18 +22,13 @@ typedef enum {
 
 // プロトタイプ宣言
 Command input_user_command(void);
+void setLandmerks(std::vector<LandMark>& landmarks);
 Position calcNextPositon(Position pos, Command user_command, unsigned int speed);
 
 int main() {
-  // memo : map_size_y == map.size(), map_size_x == map.at(0).size()
   // ランドマークの設定
   std::vector<LandMark> landmarks;
-  LandMark lm1 {"tokyo tower", 9, 0, false};
-  landmarks.push_back(lm1);
-  LandMark lm2 {"tokyo sky tree", 3, 4, false};
-  landmarks.push_back(lm2);
-  LandMark lm3 {"GS shiba-koen", 7, 8, true};
-  landmarks.push_back(lm3);
+  setLandmerks(landmarks);
 
   // マップ、ランドマーク設定を検証
   try {
@@ -46,12 +43,14 @@ int main() {
   // コマンド受付→行動のルーチン開始
   Position pos {initial_x, initial_y, initial_direction};
   unsigned int speed {min_speed};
+  unsigned int steps {0};
+  int fuel {fuel_init};
   while (true) {
     // 情報提示
-    std::cout << "[info] Position: (" << pos.x << ", " << pos.y << "),"
+    displayMap(landmarks, pos);
+    std::cout << "Step: " << steps << ", Fuel: " << fuel << ", Position: (" << pos.x << ", " << pos.y << "), "
               << "Direction: " << direction2str(pos.direction) << ", Speed: " << speed << ", "
               << lookforNearLandmark(landmarks, pos) << std::endl;
-    displayMap(landmarks, pos);
 
     // ユーザのコマンドを受け付け
     Command user_command = input_user_command();
@@ -148,12 +147,48 @@ int main() {
       // ここに来るのは (user_command == Command::GameEnd) の時だけ
       break;
     }
+
+    // 燃料消費量の計算と反映
+    fuel -= fuel_consumption[speed];
+    if (fuel <= 0) {
+      std::cout << "Game Over: Fuel has run out." << std::endl;
+      break;
+    }
+
+    // ランドマークに到達したかのチェック
+    if (judgeArriveLandmarks(landmarks, pos)) {
+      std::cout << "All landmerks reached. Congratulations!" << std::endl;
+      std::cout << "Your score: " << steps << " steps, " << fuel << " remaining fuel." << std::endl; 
+      break;
+    }
+
+    // step数をインクリメント
+    steps++;
   }
 
   std::cout << "bye!" << std::endl;
   return 0;
 }
 
+
+// ランドマークを設定する関数
+void setLandmerks(std::vector<LandMark>& landmarks) {
+  // 初期化は 名称, X座標, Y座標, false の順
+  LandMark lm1 {"tokyo tower", 7, 19, false};
+  landmarks.push_back(lm1);
+  LandMark lm2 {"tokyo sky tree", 6, 40, false};
+  landmarks.push_back(lm2);
+  LandMark lm3 {"shiba-koen", 19, 12, false};
+  landmarks.push_back(lm3);
+  LandMark lm4 {"nihon-bashi", 57, 12, false};
+  landmarks.push_back(lm4);
+  LandMark lm5 {"bay bridge", 97, 49, false};
+  landmarks.push_back(lm5);
+  LandMark lm6 {"kawasaki-daishi", 44, 41, false};
+  landmarks.push_back(lm6);
+  LandMark lm7 {"tokyo dome", 76, 22, false};
+  landmarks.push_back(lm7);
+}
 
 
 // ユーザの入力を受け付けて左折, 右折, 直進, 加速, 減速, 停止, ゲーム終了のいずれのコマンドかを解釈する関数
@@ -196,9 +231,13 @@ Command input_user_command(void) {
 }
 
 // コマンドに応じて次の自己位置を計算する関数
+// スピード出しすぎで道路外に出た場合はruntime_errorを返す
 Position calcNextPositon(Position pos, Command user_command, unsigned int speed) {
   Position next_pos {pos};
 
+  // speedの数ぶん進めるが、路外逸脱判定のために処理は1マスずつ行う
+  // TurnLeft, Rightはすでに進む先があることを確認してからここに来るので、再度の確認は不要
+  // Straightの2マス目以降のみ、進めるかの確認をしながらposを動かしていく
   for (int i = 0; i < speed; i++) {
     if (user_command == Command::TurnLeft) {
       if (pos.direction == Direction::North) {
@@ -257,8 +296,7 @@ Position calcNextPositon(Position pos, Command user_command, unsigned int speed)
         throw std::runtime_error("Over speeding and went off the road.");
       }
     } else {
-      // 左折、右折、直進以外でここに来ることは無いので、来た場合はワーニング出す。
-      // 処理を続けられないわけではないので、posをそのまま返す
+      // 左折、右折、直進以外でここに来ることは無いので、来た場合はlogic_errorを返す。
       throw std::logic_error("calcNextPositon() was called with unexpected Command.");
     }
 
